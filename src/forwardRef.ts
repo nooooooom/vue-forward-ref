@@ -1,7 +1,7 @@
-import { getCurrentInstance, h, version, VNode } from 'vue'
+import { getCurrentInstance, h, nextTick, VNode } from 'vue'
+import { setRef } from './createForwardRef'
 import { ComponentInternalInstance } from './types'
-
-const isVue2 = +version.split('.')[0] !== 3
+import { getVNode, getVNodeRef } from './utils'
 
 type ComponentType = typeof h extends (type: infer T, ...args: any[]) => any ? T | VNode : never
 
@@ -16,15 +16,18 @@ export function forwardRef(component: ComponentType, instance = getCurrentInstan
   return createInnerComponent(component, instance)
 }
 
-function createInnerComponent(component: ComponentType, parent: ComponentInternalInstance) {
-  const vnode = h(component)
-  if (isVue2) {
-    const { ref } = (parent.vnode as any).data
-    ;(vnode as any).data.ref = ref
-  } else {
-    const { ref } = parent.vnode
-    vnode.ref = ref
-  }
+function createInnerComponent(component: any, parent: ComponentInternalInstance) {
+  let oldRawRef: any = null
+
+  const parentVNode = getVNode(parent)
+  // TODO: This may be my understanding is wrong, I should be implemented as this
+  // >>> setVNodeRef(vnode, getVNodeRef(parentVNode))
+  const vnode = h(component, {
+    ref: (refValue) => {
+      const rawRef = getVNodeRef(parentVNode)
+      void nextTick(() => setRef(rawRef, oldRawRef, refValue, vnode))
+    }
+  })
 
   return vnode
 }

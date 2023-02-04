@@ -33,6 +33,7 @@
   "scripts": {
     "build": "tsup",
     "test": "vitest",
+    "prepublish": "pnpm build",
     "release": "bumpp package.json package.json --commit --push --tag && pnpm -r publish --access public"
   },
   "devDependencies": {
