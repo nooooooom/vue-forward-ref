@@ -1,4 +1,4 @@
-import { getCurrentInstance, h, nextTick, VNode } from 'vue'
+import { getCurrentInstance, h, VNode } from 'vue'
 import { setRef } from './createForwardRef'
 import { ComponentInternalInstance } from './types'
 import { getVNode, getVNodeRef } from './utils'
@@ -17,15 +17,15 @@ export function forwardRef(component: ComponentType, instance = getCurrentInstan
 }
 
 function createInnerComponent(component: any, parent: ComponentInternalInstance) {
-  let oldRawRef: any = null
-
   const parentVNode = getVNode(parent)
-  // TODO: This may be my understanding is wrong, I should be implemented as this
-  // >>> setVNodeRef(vnode, getVNodeRef(parentVNode))
+  let oldRawRef: any = null
   const vnode = h(component, {
     ref: (refValue) => {
-      const rawRef = getVNodeRef(parentVNode)
-      void nextTick(() => setRef(rawRef, oldRawRef, refValue, vnode))
+      new Promise<void>((resolve) => resolve()).then(() => {
+        const rawRef = getVNodeRef(parentVNode)
+        setRef(rawRef, oldRawRef, refValue, vnode)
+        oldRawRef = rawRef
+      })
     }
   })
 
