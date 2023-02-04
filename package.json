@@ -1,6 +1,6 @@
 {
   "name": "vue-forward-ref",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "💫 Make it easier for HOCs to forward refs.",
   "repository": {
     "type": "git",
