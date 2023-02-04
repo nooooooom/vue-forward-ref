@@ -1,6 +1,6 @@
 {
   "name": "vue-forward-ref",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "💫 Make it easier for HOCs to forward refs.",
   "repository": {
     "type": "git",
@@ -34,7 +34,7 @@
     "build": "tsup",
     "test": "vitest",
     "prepublish": "pnpm build",
-    "release": "bumpp package.json package.json --commit --push --tag && pnpm -r publish --access public"
+    "release": "bumpp package.json --commit --push --tag && pnpm -r publish --access public"
   },
   "devDependencies": {
     "bumpp": "^8.2.1",
