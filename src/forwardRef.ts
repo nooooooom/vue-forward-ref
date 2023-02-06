@@ -50,6 +50,7 @@ function createInnerComponent(component: any, parent: ComponentInternalInstance)
 }
 
 function normalizeRef(ref: any, instance: ComponentInternalInstance) {
+  if (isVue2) return ref
   return ref != null
     ? isString(ref) || isRef(ref) || isFunction(ref)
       ? { i: instance, r: ref, k: undefined, f: false }
