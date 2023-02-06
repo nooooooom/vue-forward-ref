@@ -1,5 +1,14 @@
 import { getCurrentInstance, isRef, Ref, shallowRef, watch } from 'vue'
-import { getVNode, getVNodeRef, hasOwn, isFunction, isString, isVue2, proxy } from './utils'
+import {
+  getVNode,
+  getVNodeRef,
+  hasOwn,
+  isArray,
+  isFunction,
+  isString,
+  isVue2,
+  proxy
+} from './utils'
 
 export function createForwardRef<T extends Record<string, any>>(
   forwardRef?: Ref<T | null> | null,
@@ -40,31 +49,54 @@ export function createForwardRef<T extends Record<string, any>>(
 // Here we don't need to deal with unmounted components and type errors,
 // because the wrapper component's `setRef` will handle it.
 export function setRef(rawRef: any, oldRawRef: any, refValue: any, vnode: any) {
+  if (!rawRef) return
+  if (isArray(rawRef)) {
+    rawRef.forEach((r, i) =>
+      setRef(r, oldRawRef && (isArray(oldRawRef) ? oldRawRef[i] : oldRawRef), refValue, vnode)
+    )
+    return
+  }
+
   if (isVue2) {
     const ref = rawRef
-    if (!ref) return
     if (isFunction(ref)) {
       ref(refValue)
       return
     }
 
     const vm = vnode.context
+    const isFor = vnode.data.refInFor
     const _isString = isString(ref) || typeof ref === 'number'
     const _isRef = isRef(ref)
     const refs = vm.$refs
 
-    if (_isString || _isRef) {
-      if (_isString) {
-        refs[ref] = refValue
-
-        const _setupState = vm
-        if (_setupState && hasOwn(_setupState, ref)) {
-          if (isRef(_setupState[ref])) {
-            _setupState[ref].value = refs[ref]
-          } else {
-            _setupState[ref] = refs[ref]
-          }
+    const setSetupRef = () => {
+      const { _setupState } = vm
+      if (_setupState && hasOwn(_setupState, ref)) {
+        if (isRef(_setupState[ref])) {
+          _setupState[ref].value = refs[ref]
+        } else {
+          _setupState[ref] = refs[ref]
         }
+      }
+    }
+
+    if (_isString || _isRef) {
+      if (isFor) {
+        const existing = _isString ? refs[ref] : ref.value
+        if (!isArray(existing)) {
+          if (_isString) {
+            refs[ref] = [refValue]
+            setSetupRef()
+          } else {
+            ref.value = [refValue]
+          }
+        } else if (!existing.includes(refValue)) {
+          existing.push(refValue)
+        }
+      } else if (_isString) {
+        refs[ref] = refValue
+        setSetupRef()
       } else if (_isRef) {
         ref.value = refValue
       }
@@ -91,20 +123,28 @@ export function setRef(rawRef: any, oldRawRef: any, refValue: any, vnode: any) {
     if (isFunction(ref)) {
       ref(refValue, refs)
     } else {
-      const _isString = typeof ref === 'string'
+      const _isString = isString(ref)
       const _isRef = isRef(ref)
-
       if (_isString || _isRef) {
         const doSet = () => {
           if (rawRef.f) {
-            if (_isString) {
-              refs[ref] = [refValue]
-              if (hasOwn(setupState, ref)) {
-                setupState[ref] = refs[ref]
+            const existing = _isString
+              ? hasOwn(setupState, ref)
+                ? setupState[ref]
+                : refs[ref]
+              : ref.value
+            if (!isArray(existing)) {
+              if (_isString) {
+                refs[ref] = [refValue]
+                if (hasOwn(setupState, ref)) {
+                  setupState[ref] = refs[ref]
+                }
+              } else {
+                ref.value = [refValue]
+                if (rawRef.k) refs[rawRef.k] = ref.value
               }
-            } else {
-              ref.value = [refValue]
-              if (rawRef.k) refs[rawRef.k] = ref.value
+            } else if (!existing.includes(refValue)) {
+              existing.push(refValue)
             }
           } else if (_isString) {
             refs[ref] = refValue
