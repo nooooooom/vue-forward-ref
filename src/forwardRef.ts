@@ -1,4 +1,4 @@
-import { getCurrentInstance, h, isRef } from 'vue'
+import { getCurrentInstance, h, isRef, VNode } from 'vue'
 import { setRef } from './createForwardRef'
 import { ComponentInternalInstance, ComponentType } from './types'
 import { getVNode, getVNodeRef, isFunction, isString, isVue2, setVNodeRef } from './utils'
@@ -30,7 +30,16 @@ function createInnerComponent(component: ComponentType, parent: ComponentInterna
     })
   }
 
-  const vnode = h(component as any)
+  let vnode: VNode | undefined = undefined
+  if (isVue2 && typeof component === 'object') {
+    // @ts-ignore: Vue2's `h` doesn't process vnode
+    const emptyVNode = h()
+    if (component instanceof emptyVNode.constructor) vnode = component as VNode
+    if (!vnode) vnode = h(component as any)
+  } else {
+    vnode = h(component as any)
+  }
+
   const rawRef = getVNodeRef(vnode)
   if (rawRef) {
     setVNodeRef(
