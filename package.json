@@ -1,6 +1,6 @@
 {
   "name": "vue-forward-ref",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "author": "nooooooom <https://github.com/nooooooom>",
   "description": "💫 Make it easier for HOCs to forward refs.",
   "main": "dist/index.js",
