@@ -1,10 +1,9 @@
-import { getCurrentInstance, h, isRef, VNode } from 'vue'
-import { setRef } from './createForwardRef'
+import { getCurrentInstance, h, VNode } from 'vue'
 import { ComponentInternalInstance, ComponentType } from './types'
-import { getVNode, getVNodeRef, isFunction, isString, isVue2, setVNodeRef } from './utils'
+import { isVue2, setRef, waitParentRefSetting } from './utils'
 
 /**
- * Make inner component inherits the wrapper's ref owner
+ * Make inner component inherits the parent's ref owner
  */
 export function forwardRef(component: ComponentType, instance = getCurrentInstance()) {
   if (!instance) {
@@ -19,48 +18,40 @@ function createInnerComponent(component: ComponentType, parent: ComponentInterna
     return
   }
 
-  const parentVNode = getVNode(parent)
+  let vnode: any = undefined
   let oldRawRef: any = null
 
-  const doSet = (refValue: any) => {
-    new Promise<void>((resolve) => resolve()).then(() => {
-      const rawRef = getVNodeRef(parentVNode)
-      setRef(rawRef, oldRawRef, refValue, vnode)
-      oldRawRef = rawRef
+  const overrideRef = (refValue: any) => {
+    const parentRef = isVue2 ? (parent.proxy as any).$vnode?.data?.ref : parent.vnode.ref
+    waitParentRefSetting().then(() => {
+      setRef(
+        parentRef,
+        oldRawRef,
+        refValue,
+        parent,
+        isVue2 ? (parent as any)._isDestroyed : parent.isUnmounted
+      )
+
+      oldRawRef = parentRef
     })
   }
 
-  let vnode: VNode | undefined = undefined
   if (isVue2 && typeof component === 'object') {
     // @ts-ignore: Vue2's `h` doesn't process vnode
-    const emptyVNode = h()
-    if (component instanceof emptyVNode.constructor) vnode = component as VNode
-    if (!vnode) vnode = h(component as any)
-  } else {
-    vnode = h(component as any)
+    const EmptyVNode = h()
+    if (component instanceof EmptyVNode.constructor) {
+      vnode = component as VNode
+    }
+    if (!vnode) {
+      vnode = h(component as any)
+    }
+
+    ;(vnode.data || (vnode.data = {})).ref = overrideRef
+
+    return vnode
   }
 
-  const rawRef = getVNodeRef(vnode)
-  if (rawRef) {
-    setVNodeRef(
-      vnode,
-      normalizeVNodeRef((refValue: any) => {
-        setRef(rawRef, null, refValue, vnode)
-        doSet(refValue)
-      }, parent)
-    )
-  } else {
-    setVNodeRef(vnode, normalizeVNodeRef(doSet, parent))
-  }
-
-  return vnode
-}
-
-function normalizeVNodeRef(ref: any, instance: ComponentInternalInstance) {
-  if (isVue2) return ref
-  return ref != null
-    ? isString(ref) || isRef(ref) || isFunction(ref)
-      ? { i: instance, r: ref, k: undefined, f: false }
-      : ref
-    : null
+  return (vnode = h(component as any, {
+    ref: overrideRef
+  }))
 }
