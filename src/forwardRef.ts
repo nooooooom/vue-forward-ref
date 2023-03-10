@@ -24,15 +24,17 @@ function createInnerComponent(component: ComponentType, parent: ComponentInterna
   const overrideRef = (refValue: any) => {
     const parentRef = isVue2 ? (parent.proxy as any).$vnode?.data?.ref : parent.vnode.ref
     waitParentRefSetting().then(() => {
-      setRef(
-        parentRef,
-        oldRawRef,
-        refValue,
-        parent,
-        isVue2 ? (parent as any)._isDestroyed : parent.isUnmounted
-      )
+      if (parentRef != null) {
+        setRef(
+          parentRef,
+          oldRawRef,
+          refValue,
+          parent,
+          isVue2 ? (parent as any)._isDestroyed : parent.isUnmounted
+        )
 
-      oldRawRef = parentRef
+        oldRawRef = parentRef
+      }
     })
   }
 

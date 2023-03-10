@@ -19,15 +19,17 @@ export function createForwardRef<T extends Record<string, any>>(
     (refValue) => {
       const parentRef = isVue2 ? (parent.proxy as any).$vnode?.data?.ref : parent.vnode.ref
       waitParentRefSetting().then(() => {
-        setRef(
-          parentRef,
-          oldRawRef,
-          overrideExposed ? refValue && proxy(refValue, overrideExposed) : refValue,
-          parent,
-          isVue2 ? (parent as any)._isDestroyed : parent.isUnmounted
-        )
+        if (parentRef != null) {
+          setRef(
+            parentRef,
+            oldRawRef,
+            overrideExposed ? refValue && proxy(refValue, overrideExposed) : refValue,
+            parent,
+            isVue2 ? (parent as any)._isDestroyed : parent.isUnmounted
+          )
 
-        oldRawRef = parentRef
+          oldRawRef = parentRef
+        }
       })
     },
     {
