@@ -163,8 +163,6 @@ export function vue2_setRef(ref: any, refValue: any, parent: any, isRemoval?: bo
 
 export function proxy(proxy: any, target: any) {
   if (isVue2) {
-    proxy = Object.create(proxy)
-
     const keys = Object.keys(target)
     for (let i = 0; i < keys.length; i++) {
       Object.defineProperty(proxy, keys[i], {

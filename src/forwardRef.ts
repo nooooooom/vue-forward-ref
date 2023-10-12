@@ -1,5 +1,5 @@
 import { h, VNode } from 'vue'
-import { ComponentInternalInstance, ComponentType } from './types'
+import { ComponentType } from './types'
 import { compatGetCurrentInstance, isVue2, setRef, waitParentRefSetting } from './utils'
 
 /**
