@@ -13,7 +13,7 @@ export function forwardRef(component: ComponentType, instance = compatGetCurrent
   return createInnerComponent(component, instance)
 }
 
-function createInnerComponent(component: ComponentType, parent: any) {
+function createInnerComponent(component: ComponentType, instance: any) {
   if (component === undefined || component === null) {
     return
   }
@@ -22,18 +22,19 @@ function createInnerComponent(component: ComponentType, parent: any) {
   let oldRawRef: any = null
 
   const overrideRef = (refValue: any) => {
-    const parentRef = isVue2 ? parent.$vnode?.data?.ref : parent.vnode.ref
+    const parent = isVue2 ? instance.$vnode?.context : instance.parent
+    const rawRef = isVue2 ? instance.$vnode?.data?.ref : instance.vnode.ref
     waitParentRefSetting().then(() => {
-      if (parentRef != null) {
+      if (rawRef != null) {
         setRef(
-          parentRef,
+          rawRef,
           oldRawRef,
           refValue,
           parent,
-          isVue2 ? (parent as any)._isDestroyed : parent.isUnmounted
+          isVue2 ? (instance as any)._isDestroyed : instance.isUnmounted
         )
 
-        oldRawRef = parentRef
+        oldRawRef = rawRef
       }
     })
   }
