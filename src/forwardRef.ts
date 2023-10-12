@@ -1,11 +1,11 @@
-import { getCurrentInstance, h, VNode } from 'vue'
+import { h, VNode } from 'vue'
 import { ComponentInternalInstance, ComponentType } from './types'
-import { isVue2, setRef, waitParentRefSetting } from './utils'
+import { compatGetCurrentInstance, isVue2, setRef, waitParentRefSetting } from './utils'
 
 /**
  * Make inner component inherits the parent's ref owner
  */
-export function forwardRef(component: ComponentType, instance = getCurrentInstance()) {
+export function forwardRef(component: ComponentType, instance = compatGetCurrentInstance()) {
   if (!instance) {
     throw new Error(`forwardRef is used without current active component instance.`)
   }
@@ -13,7 +13,7 @@ export function forwardRef(component: ComponentType, instance = getCurrentInstan
   return createInnerComponent(component, instance)
 }
 
-function createInnerComponent(component: ComponentType, parent: ComponentInternalInstance) {
+function createInnerComponent(component: ComponentType, parent: any) {
   if (component === undefined || component === null) {
     return
   }
@@ -22,7 +22,7 @@ function createInnerComponent(component: ComponentType, parent: ComponentInterna
   let oldRawRef: any = null
 
   const overrideRef = (refValue: any) => {
-    const parentRef = isVue2 ? (parent.proxy as any).$vnode?.data?.ref : parent.vnode.ref
+    const parentRef = isVue2 ? parent.$vnode?.data?.ref : parent.vnode.ref
     waitParentRefSetting().then(() => {
       if (parentRef != null) {
         setRef(

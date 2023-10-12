@@ -1,7 +1,11 @@
 import { EMPTY_OBJ, hasOwn, isArray, isFunction, isString, remove } from '@vue/shared'
-import { isRef, nextTick, version } from 'vue'
+import { getCurrentInstance, isRef, nextTick, version } from 'vue'
 
 export const isVue2 = +version.split('.')[0] !== 3
+
+export function compatGetCurrentInstance(): any {
+  return isVue2 ? getCurrentInstance()?.proxy : getCurrentInstance()
+}
 
 export function waitParentRefSetting() {
   return new Promise<void>((resolve) => new Promise<void>((r) => r()).then(() => nextTick(resolve)))
@@ -110,7 +114,7 @@ export function vue2_setRef(ref: any, refValue: any, parent: any, isRemoval?: bo
     return
   }
 
-  const isFor = parent.proxy.$vnode.data.refInFor
+  const isFor = parent.$vnode.data.refInFor
   const _isString = typeof ref === 'string' || typeof ref === 'number'
   const _isRef = isRef(ref)
   const refs = parent.$refs

@@ -1,10 +1,10 @@
-import { getCurrentInstance, Ref, shallowRef, watch } from 'vue'
-import { isVue2, proxy, setRef, waitParentRefSetting } from './utils'
+import { Ref, shallowRef, watch } from 'vue'
+import { compatGetCurrentInstance, isVue2, proxy, setRef, waitParentRefSetting } from './utils'
 
 export function createForwardRef<T extends Record<string, any>>(
   forwardRef?: Ref<T | null> | null,
   overrideExposed?: Record<string, any> | null,
-  parent = getCurrentInstance()
+  parent = compatGetCurrentInstance()
 ) {
   if (!parent) {
     throw new Error(`createForwardRef is used without current active component instance.`)
@@ -17,7 +17,7 @@ export function createForwardRef<T extends Record<string, any>>(
   watch(
     forwardRef,
     (refValue) => {
-      const parentRef = isVue2 ? (parent.proxy as any).$vnode?.data?.ref : parent.vnode.ref
+      const parentRef = isVue2 ? parent.$vnode?.data?.ref : parent.vnode.ref
       waitParentRefSetting().then(() => {
         if (parentRef != null) {
           setRef(
@@ -25,7 +25,7 @@ export function createForwardRef<T extends Record<string, any>>(
             oldRawRef,
             overrideExposed ? refValue && proxy(refValue, overrideExposed) : refValue,
             parent,
-            isVue2 ? (parent as any)._isDestroyed : parent.isUnmounted
+            isVue2 ? parent._isDestroyed : parent.isUnmounted
           )
 
           oldRawRef = parentRef
